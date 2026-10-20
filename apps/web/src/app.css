@@ -13,7 +13,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.fluent-root {
+/* 只作用于应用根节点，不影响 Fluent 挂在 body 上的 portal 节点 */
+#root > .fui-FluentProvider {
   height: 100%;
 }
 

@@ -20,7 +20,9 @@ function usePrefersDark(): boolean {
 function Root() {
   const dark = usePrefersDark();
   return (
-    <FluentProvider theme={dark ? webDarkTheme : webLightTheme} className="fluent-root">
+    // 不要给 FluentProvider 加 className：Fluent 会把它复制到弹窗、提示的 portal 节点上，
+    // 让 portal 也变成全屏高度并挡住点击。根节点高度在 app.css 里用 #root > .fui-FluentProvider 设置。
+    <FluentProvider theme={dark ? webDarkTheme : webLightTheme}>
       <App />
     </FluentProvider>
   );
