@@ -24,6 +24,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+          # 仓库暂未提交 pnpm-lock.yaml，关闭 setup-node v5 默认开启的依赖缓存
+          package-manager-cache: false
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm build
       - uses: actions/configure-pages@v5
