@@ -1,0 +1,26 @@
+{
+  "name": "@sealpad/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "印台核心库：坐标换算、骑缝章切分、去白底、PDF 盖章导出（纯 TypeScript，浏览器和 Node 都能运行）",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "tsx --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "pdfjs-dist": "^6.2.108",
+    "tsx": "^4.20.0",
+    "typescript": "^6.0.0"
+  }
+}

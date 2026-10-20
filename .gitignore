@@ -1,0 +1,22 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+Thumbs.db
+
+# pdf.js 静态资源（构建时从 node_modules 复制）
+apps/web/public/pdfjs/
+
+# Playwright
+apps/web/test-results/
+apps/web/playwright-report/
+
+# Tauri / Rust
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+
+# 编辑器
+.vscode/*
+!.vscode/extensions.json
+.idea/
