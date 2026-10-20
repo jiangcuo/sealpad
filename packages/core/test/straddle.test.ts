@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { planStraddle, sliceBoundsPx, splitGroups, straddlePages, straddleSliceRect } from '../src/straddle.ts';
 import { DEFAULT_STRADDLE, type StraddleOptions } from '../src/types.ts';
 
-const opts = (o: Partial<StraddleOptions>): StraddleOptions => ({ ...DEFAULT_STRADDLE, enabled: true, sealId: 's', ...o });
+const opts = (o: Partial<StraddleOptions>): StraddleOptions => ({ ...DEFAULT_STRADDLE, enabled: true, assetId: 's', ...o });
 
 test('页码范围、跳过首页、只盖奇数页', () => {
   assert.deepEqual(straddlePages(6, opts({})), [0, 1, 2, 3, 4, 5]);

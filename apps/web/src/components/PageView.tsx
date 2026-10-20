@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import { CSS_PX_PER_PT, isRenderCancelled, type PDFDocumentProxy, type PageSize } from '../lib/pdf.ts';
-import { SEAL_DRAG_TYPE } from './SealLibrary.tsx';
+import { ASSET_DRAG_TYPE } from './SignatureLibrary.tsx';
 
 interface Props {
   proxy: PDFDocumentProxy;
@@ -10,7 +10,7 @@ interface Props {
   scrollRoot: HTMLElement | null;
   children?: ReactNode;
   onBlankPointerDown(): void;
-  onDropSeal(sealId: string, xMm: number, yMm: number): void;
+  onDropSeal(assetId: string, xMm: number, yMm: number): void;
   registerElement(index: number, el: HTMLElement | null): void;
 }
 
@@ -79,19 +79,19 @@ export function PageView(props: Props) {
   }, [visible, zoom, proxy, index]);
 
   const onDragOver = (e: DragEvent) => {
-    if (!e.dataTransfer.types.includes(SEAL_DRAG_TYPE)) return;
+    if (!e.dataTransfer.types.includes(ASSET_DRAG_TYPE)) return;
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = 'copy';
   };
 
   const onDrop = (e: DragEvent<HTMLDivElement>) => {
-    const sealId = e.dataTransfer.getData(SEAL_DRAG_TYPE);
-    if (!sealId) return;
+    const assetId = e.dataTransfer.getData(ASSET_DRAG_TYPE);
+    if (!assetId) return;
     e.preventDefault();
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
-    props.onDropSeal(sealId, (e.clientX - rect.left) / kMm, (e.clientY - rect.top) / kMm);
+    props.onDropSeal(assetId, (e.clientX - rect.left) / kMm, (e.clientY - rect.top) / kMm);
   };
 
   return (

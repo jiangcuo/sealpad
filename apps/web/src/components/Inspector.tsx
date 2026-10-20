@@ -11,7 +11,7 @@ import {
   Text,
 } from '@fluentui/react-components';
 import { ArrowRotateClockwiseRegular, CopyRegular, DeleteRegular } from '@fluentui/react-icons';
-import { round, type Placement, type SealAsset, type StraddleOptions } from '@sealpad/core';
+import { round, type Placement, type SignatureAsset, type StraddleOptions } from '@sealpad/core';
 import { pageSizeMm, type StraddleLayout } from '../lib/layout.ts';
 import type { PageSize } from '../lib/pdf.ts';
 import { NumberField } from './NumberField.tsx';
@@ -19,9 +19,9 @@ import { NumberField } from './NumberField.tsx';
 interface Props {
   pages: PageSize[];
   currentPage: number;
-  seals: SealAsset[];
+  seals: SignatureAsset[];
   selected: Placement | null;
-  selectedSeal: SealAsset | null;
+  selectedSeal: SignatureAsset | null;
   onChange(id: string, patch: Partial<Placement>): void;
   onDelete(id: string): void;
   onApplyAll(id: string): void;
@@ -32,7 +32,7 @@ interface Props {
 
 function PlacementSection({ p, seal, pages, onChange, onDelete, onApplyAll }: {
   p: Placement;
-  seal: SealAsset | null;
+  seal: SignatureAsset | null;
   pages: PageSize[];
   onChange(patch: Partial<Placement>): void;
   onDelete(): void;
@@ -81,7 +81,7 @@ function PlacementSection({ p, seal, pages, onChange, onDelete, onApplyAll }: {
 
 function StraddleSection({ pages, seals, opts, layout, onChange }: {
   pages: PageSize[];
-  seals: SealAsset[];
+  seals: SignatureAsset[];
   opts: StraddleOptions;
   layout: StraddleLayout | null;
   onChange(patch: Partial<StraddleOptions>): void;
@@ -90,8 +90,8 @@ function StraddleSection({ pages, seals, opts, layout, onChange }: {
   const sorted = [...seals].sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'seal' ? -1 : 1));
   const enable = (on: boolean) => {
     if (!on) return onChange({ enabled: false });
-    const seal = seals.find((s) => s.id === opts.sealId) ?? sorted[0];
-    onChange({ enabled: true, sealId: seal?.id ?? null, widthMm: seal?.widthMm ?? opts.widthMm });
+    const seal = seals.find((s) => s.id === opts.assetId) ?? sorted[0];
+    onChange({ enabled: true, assetId: seal?.id ?? null, widthMm: seal?.widthMm ?? opts.widthMm });
   };
   const sliceMm = layout && layout.pieces.length ? layout.minSliceMm : 0;
   return (
@@ -110,10 +110,10 @@ function StraddleSection({ pages, seals, opts, layout, onChange }: {
           <Field label="使用的印章" size="small">
             <Select
               size="small"
-              value={opts.sealId ?? ''}
+              value={opts.assetId ?? ''}
               onChange={(_, d) => {
                 const seal = seals.find((s) => s.id === d.value);
-                onChange({ sealId: d.value, widthMm: seal?.widthMm ?? opts.widthMm });
+                onChange({ assetId: d.value, widthMm: seal?.widthMm ?? opts.widthMm });
               }}
             >
               {sorted.map((s) => (

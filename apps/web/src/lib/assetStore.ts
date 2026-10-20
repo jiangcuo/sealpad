@@ -1,13 +1,13 @@
-import type { SealAsset } from '@sealpad/core';
+import type { SignatureAsset } from '@sealpad/core';
 
 /**
  * 印章库存储。网页版和桌面版目前都用 IndexedDB（Tauri 的 WebView 会把它保存在应用数据目录）。
  * 路线图第四阶段会在桌面版改成加密文件 + 使用前输入 PIN。
  */
-export interface SealStore {
+export interface AssetStore {
   readonly persistent: boolean;
-  list(): Promise<SealAsset[]>;
-  put(seal: SealAsset): Promise<void>;
+  list(): Promise<SignatureAsset[]>;
+  put(seal: SignatureAsset): Promise<void>;
   remove(id: string): Promise<void>;
 }
 
@@ -33,12 +33,12 @@ function openDb(): Promise<IDBDatabase> {
   });
 }
 
-function createIndexedDbStore(db: IDBDatabase): SealStore {
+function createIndexedDbStore(db: IDBDatabase): AssetStore {
   const tx = (mode: IDBTransactionMode) => db.transaction(STORE, mode).objectStore(STORE);
   return {
     persistent: true,
     async list() {
-      const all = (await request(tx('readonly').getAll())) as SealAsset[];
+      const all = (await request(tx('readonly').getAll())) as SignatureAsset[];
       return all.sort((a, b) => a.createdAt - b.createdAt);
     },
     async put(seal) {
@@ -50,8 +50,8 @@ function createIndexedDbStore(db: IDBDatabase): SealStore {
   };
 }
 
-function createMemoryStore(): SealStore {
-  const map = new Map<string, SealAsset>();
+function createMemoryStore(): AssetStore {
+  const map = new Map<string, SignatureAsset>();
   return {
     persistent: false,
     async list() {
@@ -67,7 +67,7 @@ function createMemoryStore(): SealStore {
 }
 
 /** 浏览器禁用 IndexedDB（如部分隐私模式）时退回内存存储，关闭页面后丢失 */
-export async function createSealStore(): Promise<SealStore> {
+export async function createAssetStore(): Promise<AssetStore> {
   try {
     if (!('indexedDB' in window)) return createMemoryStore();
     return createIndexedDbStore(await openDb());

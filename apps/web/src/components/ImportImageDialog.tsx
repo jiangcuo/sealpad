@@ -24,7 +24,7 @@ import {
   removeWhiteBackground,
   round,
   type RgbaImage,
-  type SealAsset,
+  type SignatureAsset,
   type SealKind,
 } from '@sealpad/core';
 import { decodeImageFile, rgbaToCanvas, rgbaToPng } from '../lib/image.ts';
@@ -34,7 +34,7 @@ import { NumberField } from './NumberField.tsx';
 interface Props {
   file: OpenedFile | null;
   onCancel(): void;
-  onSave(seal: SealAsset): Promise<void>;
+  onSave(seal: SignatureAsset): Promise<void>;
 }
 
 const DEFAULT_WIDTH: Record<SealKind, number> = { seal: 40, signature: 45 };
@@ -43,7 +43,7 @@ function stripExtension(name: string) {
   return name.replace(/\.[^.]+$/, '');
 }
 
-export function ImportSealDialog({ file, onCancel, onSave }: Props) {
+export function ImportImageDialog({ file, onCancel, onSave }: Props) {
   const [source, setSource] = useState<RgbaImage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState('');

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Button, Text } from '@fluentui/react-components';
 import { DocumentPdfRegular, FolderOpenRegular } from '@fluentui/react-icons';
-import type { Placement, SealAsset } from '@sealpad/core';
+import type { Placement, SignatureAsset } from '@sealpad/core';
 import { CSS_PX_PER_PT, type PDFDocumentProxy, type PageSize } from '../lib/pdf.ts';
 import { pageSizeMm, type StraddleLayout } from '../lib/layout.ts';
 import { PageView } from './PageView.tsx';
@@ -11,14 +11,14 @@ interface Props {
   doc: { proxy: PDFDocumentProxy; pages: PageSize[]; name: string } | null;
   zoom: number;
   placements: Placement[];
-  seals: Map<string, SealAsset>;
-  sealUrls: Map<string, string>;
+  seals: Map<string, SignatureAsset>;
+  assetUrls: Map<string, string>;
   straddle: StraddleLayout | null;
   selectedId: string | null;
   onSelect(id: string | null): void;
   onChange(id: string, patch: Partial<Placement>): void;
   onDelete(id: string): void;
-  onDropSeal(sealId: string, pageIndex: number, cxMm: number, cyMm: number): void;
+  onDropSeal(assetId: string, pageIndex: number, cxMm: number, cyMm: number): void;
   onCurrentPage(index: number): void;
   onViewportWidth(width: number): void;
   onOpen(): void;
@@ -122,7 +122,7 @@ export function DocumentView(props: Props) {
             scrollRoot={scrollEl}
             registerElement={registerElement}
             onBlankPointerDown={() => props.onSelect(null)}
-            onDropSeal={(sealId, x, y) => props.onDropSeal(sealId, index, x, y)}
+            onDropSeal={(assetId, x, y) => props.onDropSeal(assetId, index, x, y)}
           >
             {props.straddle?.pieces
               .filter((piece) => piece.pageIndex === index)
@@ -139,7 +139,7 @@ export function DocumentView(props: Props) {
                   data-testid="straddle-piece"
                 >
                   <img
-                    src={props.sealUrls.get(props.straddle!.seal.id)}
+                    src={props.assetUrls.get(props.straddle!.seal.id)}
                     alt=""
                     draggable={false}
                     style={{
@@ -156,8 +156,8 @@ export function DocumentView(props: Props) {
                 <StampView
                   key={p.id}
                   placement={p}
-                  url={props.sealUrls.get(p.sealId)}
-                  name={props.seals.get(p.sealId)?.name ?? ''}
+                  url={props.assetUrls.get(p.assetId)}
+                  name={props.seals.get(p.assetId)?.name ?? ''}
                   k={k}
                   pageWidthMm={widthMm}
                   pageHeightMm={heightMm}

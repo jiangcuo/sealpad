@@ -11,21 +11,21 @@ import {
   cropImage,
   stampPdf,
   type Placement,
-  type SealAsset,
+  type SignatureAsset,
   type StraddleOptions,
 } from '@sealpad/core';
 import { TopBar } from './components/TopBar.tsx';
-import { SealLibrary } from './components/SealLibrary.tsx';
+import { SignatureLibrary } from './components/SignatureLibrary.tsx';
 import { DocumentView } from './components/DocumentView.tsx';
 import { Inspector } from './components/Inspector.tsx';
-import { ImportSealDialog } from './components/ImportSealDialog.tsx';
+import { ImportImageDialog } from './components/ImportImageDialog.tsx';
 import { AboutDialog } from './components/AboutDialog.tsx';
 import { NoticeBar, type Notice } from './components/NoticeBar.tsx';
-import { isTypingTarget, readFlag, useSealUrls, writeFlag } from './hooks.ts';
+import { isTypingTarget, readFlag, useAssetUrls, writeFlag } from './hooks.ts';
 import { buildDraws, computeStraddle, pageSizeMm } from './lib/layout.ts';
 import { CSS_PX_PER_PT, PdfPasswordError, openPdf, type OpenedPdf } from './lib/pdf.ts';
 import { rgbaToPng, svgToRgba } from './lib/image.ts';
-import { createSealStore, type SealStore } from './lib/sealStore.ts';
+import { createAssetStore, type AssetStore } from './lib/assetStore.ts';
 import {
   IMAGE_EXTENSIONS,
   WORD_EXTENSIONS,
@@ -57,8 +57,8 @@ function errorText(err: unknown): string {
 
 export function App() {
   const [platform, setPlatform] = useState<Platform | null>(null);
-  const [store, setStore] = useState<SealStore | null>(null);
-  const [seals, setSeals] = useState<SealAsset[]>([]);
+  const [store, setStore] = useState<AssetStore | null>(null);
+  const [seals, setSeals] = useState<SignatureAsset[]>([]);
   const [doc, setDoc] = useState<LoadedDoc | null>(null);
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [straddle, setStraddle] = useState<StraddleOptions>(DEFAULT_STRADDLE);
@@ -74,15 +74,15 @@ export function App() {
   const docRef = useRef<LoadedDoc | null>(null);
   const viewportWidth = useRef(900);
 
-  const sealMap = useMemo(() => new Map(seals.map((s) => [s.id, s])), [seals]);
-  const sealUrls = useSealUrls(seals);
+  const assetMap = useMemo(() => new Map(seals.map((s) => [s.id, s])), [seals]);
+  const assetUrls = useAssetUrls(seals);
   const pages = doc?.pdf.pages ?? [];
-  const straddleLayout = useMemo(() => computeStraddle(pages, straddle, sealMap), [pages, straddle, sealMap]);
+  const straddleLayout = useMemo(() => computeStraddle(pages, straddle, assetMap), [pages, straddle, assetMap]);
   const selected = placements.find((p) => p.id === selectedId) ?? null;
 
   useEffect(() => {
     void createPlatform().then(setPlatform);
-    void createSealStore().then(async (s) => {
+    void createAssetStore().then(async (s) => {
       setStore(s);
       setSeals(await s.list());
     });
@@ -174,7 +174,7 @@ export function App() {
     }
     setBusy('正在生成 PDF…');
     try {
-      const draws = await buildDraws(placements, straddleLayout, sealMap);
+      const draws = await buildDraws(placements, straddleLayout, assetMap);
       const out = await stampPdf(doc.bytes, draws);
       setBusy(null);
       const where = await platform.saveFile(exportName(doc.name), out);
@@ -184,12 +184,12 @@ export function App() {
     } finally {
       setBusy(null);
     }
-  }, [doc, platform, placements, straddleLayout, sealMap]);
+  }, [doc, platform, placements, straddleLayout, assetMap]);
 
   // ---------- 印章库 ----------
 
-  const saveSeal = useCallback(
-    async (seal: SealAsset) => {
+  const saveAsset = useCallback(
+    async (seal: SignatureAsset) => {
       await store?.put(seal);
       setSeals((list) => [...list.filter((s) => s.id !== seal.id), seal]);
     },
@@ -202,7 +202,7 @@ export function App() {
       const bounds = opaqueBounds(raw, 8, 2);
       const img = bounds ? cropImage(raw, bounds) : raw;
       const png = await rgbaToPng(img);
-      await saveSeal({
+      await saveAsset({
         id: createId(),
         name: SAMPLE_SEAL.name,
         kind: 'seal',
@@ -217,14 +217,14 @@ export function App() {
     } catch (err) {
       setNotice({ intent: 'error', title: '生成示例印章失败', text: errorText(err) });
     }
-  }, [saveSeal]);
+  }, [saveAsset]);
 
-  const deleteSeal = useCallback(
+  const deleteAsset = useCallback(
     async (id: string) => {
       await store?.remove(id);
       setSeals((list) => list.filter((s) => s.id !== id));
-      setPlacements((ps) => ps.filter((p) => p.sealId !== id));
-      setStraddle((s) => (s.sealId === id ? { ...s, sealId: null, enabled: false } : s));
+      setPlacements((ps) => ps.filter((p) => p.assetId !== id));
+      setStraddle((s) => (s.assetId === id ? { ...s, assetId: null, enabled: false } : s));
     },
     [store],
   );
@@ -241,14 +241,14 @@ export function App() {
   // ---------- 盖章 ----------
 
   const addPlacement = useCallback(
-    (sealId: string, pageIndex: number, cxMm?: number, cyMm?: number) => {
-      const seal = sealMap.get(sealId);
+    (assetId: string, pageIndex: number, cxMm?: number, cyMm?: number) => {
+      const seal = assetMap.get(assetId);
       const page = pages[pageIndex];
       if (!seal || !page) return;
       const { widthMm, heightMm } = pageSizeMm(page);
       const p: Placement = {
         id: createId(),
-        sealId,
+        assetId,
         pageIndex,
         cxMm: clamp(cxMm ?? widthMm * 0.68, 0, widthMm),
         cyMm: clamp(cyMm ?? heightMm * 0.78, 0, heightMm),
@@ -259,7 +259,7 @@ export function App() {
       setPlacements((ps) => [...ps, p]);
       setSelectedId(p.id);
     },
-    [sealMap, pages],
+    [assetMap, pages],
   );
 
   const updatePlacement = useCallback((id: string, patch: Partial<Placement>) => {
@@ -385,22 +385,22 @@ export function App() {
       />
       {notice && <NoticeBar notice={notice} onDismiss={() => setNotice(null)} />}
       <div className="workspace">
-        <SealLibrary
+        <SignatureLibrary
           seals={seals}
-          urls={sealUrls}
+          urls={assetUrls}
           persistent={store?.persistent ?? true}
           canStamp={!!doc}
           onImport={importViaDialog}
           onAddSample={addSampleSeal}
           onStamp={(id) => addPlacement(id, currentPage)}
-          onDelete={deleteSeal}
+          onDelete={deleteAsset}
         />
         <DocumentView
           doc={doc ? { proxy: doc.pdf.proxy, pages: doc.pdf.pages, name: doc.name } : null}
           zoom={zoom}
           placements={placements}
-          seals={sealMap}
-          sealUrls={sealUrls}
+          seals={assetMap}
+          assetUrls={assetUrls}
           straddle={straddleLayout}
           selectedId={selectedId}
           onSelect={setSelectedId}
@@ -416,7 +416,7 @@ export function App() {
           currentPage={currentPage}
           seals={seals}
           selected={selected}
-          selectedSeal={selected ? (sealMap.get(selected.sealId) ?? null) : null}
+          selectedSeal={selected ? (assetMap.get(selected.assetId) ?? null) : null}
           onChange={updatePlacement}
           onDelete={removePlacement}
           onApplyAll={applyToAllPages}
@@ -442,11 +442,11 @@ export function App() {
           <Spinner label={busy} />
         </div>
       )}
-      <ImportSealDialog
+      <ImportImageDialog
         file={importFile}
         onCancel={() => setImportFile(null)}
         onSave={async (seal) => {
-          await saveSeal(seal);
+          await saveAsset(seal);
           setImportFile(null);
           setNotice({ intent: 'success', title: '已加入印章库', text: `「${seal.name}」可以拖到页面上使用了。` });
         }}

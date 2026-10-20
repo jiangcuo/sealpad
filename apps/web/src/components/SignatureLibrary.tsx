@@ -12,12 +12,12 @@ import {
   Tooltip,
 } from '@fluentui/react-components';
 import { DeleteRegular, ImageAddRegular, SparkleRegular } from '@fluentui/react-icons';
-import { round, type SealAsset } from '@sealpad/core';
+import { round, type SignatureAsset } from '@sealpad/core';
 
-export const SEAL_DRAG_TYPE = 'application/x-sealpad-seal';
+export const ASSET_DRAG_TYPE = 'application/x-sealpad-asset';
 
 interface Props {
-  seals: SealAsset[];
+  seals: SignatureAsset[];
   urls: Map<string, string>;
   persistent: boolean;
   canStamp: boolean;
@@ -27,8 +27,8 @@ interface Props {
   onDelete(id: string): void;
 }
 
-export function SealLibrary(props: Props) {
-  const [pendingDelete, setPendingDelete] = useState<SealAsset | null>(null);
+export function SignatureLibrary(props: Props) {
+  const [pendingDelete, setPendingDelete] = useState<SignatureAsset | null>(null);
   return (
     <aside className="panel panel-left" aria-label="印章库">
       <div className="panel-header">
@@ -60,7 +60,7 @@ export function SealLibrary(props: Props) {
               className="seal-item"
               draggable={props.canStamp}
               onDragStart={(e) => {
-                e.dataTransfer.setData(SEAL_DRAG_TYPE, seal.id);
+                e.dataTransfer.setData(ASSET_DRAG_TYPE, seal.id);
                 e.dataTransfer.effectAllowed = 'copy';
                 const img = e.currentTarget.querySelector('img');
                 if (img) e.dataTransfer.setDragImage(img, img.width / 2, img.height / 2);

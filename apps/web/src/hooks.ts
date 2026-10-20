@@ -1,8 +1,8 @@
 import { useMemo, useRef } from 'react';
-import type { SealAsset } from '@sealpad/core';
+import type { SignatureAsset } from '@sealpad/core';
 
 /** 为每个印章维护一个 blob URL，印章删除时释放 */
-export function useSealUrls(seals: SealAsset[]): Map<string, string> {
+export function useAssetUrls(seals: SignatureAsset[]): Map<string, string> {
   const cache = useRef(new Map<string, { png: Uint8Array; url: string }>());
   const urls = useMemo(() => {
     const next = new Map<string, string>();

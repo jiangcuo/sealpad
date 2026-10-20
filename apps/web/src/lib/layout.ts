@@ -4,7 +4,7 @@ import {
   ptToMm,
   straddleSliceRect,
   type Placement,
-  type SealAsset,
+  type SignatureAsset,
   type StampDraw,
   type StraddleOptions,
 } from '@sealpad/core';
@@ -25,7 +25,7 @@ export interface StraddlePiece {
 }
 
 export interface StraddleLayout {
-  seal: SealAsset;
+  seal: SignatureAsset;
   sealWidthMm: number;
   sealHeightMm: number;
   pieces: StraddlePiece[];
@@ -41,10 +41,10 @@ export function pageSizeMm(p: PageSize) {
 export function computeStraddle(
   pages: PageSize[],
   opts: StraddleOptions,
-  seals: Map<string, SealAsset>,
+  seals: Map<string, SignatureAsset>,
 ): StraddleLayout | null {
-  if (!opts.enabled || !opts.sealId) return null;
-  const seal = seals.get(opts.sealId);
+  if (!opts.enabled || !opts.assetId) return null;
+  const seal = seals.get(opts.assetId);
   if (!seal) return null;
   const sealWidthMm = opts.widthMm > 0 ? opts.widthMm : seal.widthMm;
   const sealHeightMm = (sealWidthMm * seal.pixelHeight) / seal.pixelWidth;
@@ -71,11 +71,11 @@ export function computeStraddle(
 export async function buildDraws(
   placements: Placement[],
   straddle: StraddleLayout | null,
-  seals: Map<string, SealAsset>,
+  seals: Map<string, SignatureAsset>,
 ): Promise<StampDraw[]> {
   const draws: StampDraw[] = [];
   for (const p of placements) {
-    const seal = seals.get(p.sealId);
+    const seal = seals.get(p.assetId);
     if (!seal) continue;
     draws.push({
       pageIndex: p.pageIndex,
