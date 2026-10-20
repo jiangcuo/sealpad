@@ -17,11 +17,28 @@ async function makeContract(): Promise<Uint8Array> {
   return doc.save();
 }
 
+const logs = new WeakMap<Page, string[]>();
+
+/** 收集页面状态，便于在 CI 注释里直接看到失败原因 */
+async function diagnostics(page: Page): Promise<string> {
+  const state = await page.evaluate(() => ({
+    active: document.activeElement?.outerHTML.slice(0, 200),
+    fileInputs: document.querySelectorAll('input[type=file]').length,
+    inert: [...document.querySelectorAll('[inert],[aria-hidden=true]')].map((e) => e.tagName + '.' + e.className).slice(0, 10),
+    body: document.body.innerText.slice(0, 600),
+  }));
+  return `${JSON.stringify(state, null, 1)}\nconsole:\n${(logs.get(page) ?? []).slice(-20).join('\n')}`;
+}
+
 // 直接传文件内容而不是路径：部分环境下非 ASCII 路径（测试输出目录含中文标题）无法被浏览器读取
 async function openFile(page: Page, buttonName: string, file: { name: string; mimeType: string; bytes: Uint8Array }) {
-  const chooser = page.waitForEvent('filechooser');
+  const chooser = page.waitForEvent('filechooser', { timeout: 15_000 });
   await page.getByRole('button', { name: buttonName, exact: true }).first().click();
-  await (await chooser).setFiles({ name: file.name, mimeType: file.mimeType, buffer: Buffer.from(file.bytes) });
+  try {
+    await (await chooser).setFiles({ name: file.name, mimeType: file.mimeType, buffer: Buffer.from(file.bytes) });
+  } catch (err) {
+    throw new Error(`没有弹出文件选择框：${(err as Error).message}\n${await diagnostics(page)}`);
+  }
 }
 
 function sealPadImages(doc: PDFDocument, pageIndex: number): number {
@@ -31,6 +48,10 @@ function sealPadImages(doc: PDFDocument, pageIndex: number): number {
 }
 
 test.beforeEach(async ({ page }) => {
+  const list: string[] = [];
+  logs.set(page, list);
+  page.on('console', (m) => list.push(`[${m.type()}] ${m.text().slice(0, 300)}`));
+  page.on('pageerror', (e) => list.push(`[pageerror] ${e.message}`));
   // 让网页版走「下载」分支，方便测试拿到导出的文件
   await page.addInitScript(() => {
     delete (window as unknown as { showSaveFilePicker?: unknown }).showSaveFilePicker;
